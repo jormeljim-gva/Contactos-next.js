@@ -1,0 +1,42 @@
+// Archivo: prisma/schema.prisma
+
+// 1. Configuramos el cliente que generará Prisma para usar en TypeScript
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 2. Le indicamos a Prisma qué motor de BD usamos y dónde está la conexión
+datasource db {
+  provider = "mysql"
+  url      = env("mysql://jormeljim:@localhost:3306/agenda_contactos")
+}
+
+// 3. Modelado de Dominio: Entidad Usuario
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String    // Contraseña que posteriormente hashearemos
+  contacts  Contact[] // Relación 1:N -> Un usuario tiene muchos contactos
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// 4. Modelado de Dominio: Entidad Contacto
+model Contact {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(100) // Buenas prácticas: limitar tamaño en DB
+  phone     String   @db.VarChar(15)
+  email     String   @db.VarChar(150)
+  province  String   @db.VarChar(50)
+  
+  // Relación con el Usuario (Foreign Key)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Índices para optimizar las búsquedas futuras por email o teléfono
+  @@index([email])
+  @@index([phone])
+}
